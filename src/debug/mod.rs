@@ -71,13 +71,11 @@ fn update_fps(diagnostics: Res<Diagnostics>, mut query: Query<&mut Text, With<Fp
         if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(average) = fps.average() {
                 text.sections[1].value = format!("{:.2}", average);
-                text.sections[1].style.color = if average < 29.0 {
-                    Color::RED
-                } else if average < 59.0 {
-                    Color::GOLD
-                } else {
-                    Color::GREEN
-                }
+                text.sections[1].style.color = match average as u32 {
+                    0..=28 => Color::RED,
+                    29..=58 => Color::GOLD,
+                    _ => Color::GREEN,
+                };
             }
         }
     }
