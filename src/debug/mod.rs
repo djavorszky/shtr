@@ -1,5 +1,11 @@
+use bevy::core::FixedTimestep;
 use bevy::diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
+
+const LABEL: &str = "debug_timestep";
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
+struct DebugStage;
 
 #[derive(Default)]
 pub struct DebugPlugin;
@@ -8,7 +14,13 @@ impl Plugin for DebugPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_plugin(FrameTimeDiagnosticsPlugin)
             .add_startup_system(setup.system())
-            .add_system(update_fps.system());
+            .add_stage_after(
+                CoreStage::Update,
+                DebugStage,
+                SystemStage::parallel()
+                    .with_run_criteria(FixedTimestep::steps_per_second(1.0).with_label(LABEL))
+                    .with_system(update_fps.system()),
+            );
     }
 
     fn name(&self) -> &str {
@@ -38,12 +50,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         },
                     },
                     TextSection {
-                        value: "".to_string(),
+                        value: "0".to_string(),
                         style: TextStyle {
                             font: asset_server
                                 .load("fonts/firecode-regular-nerd-font-complete.ttf"),
                             font_size: 24.0,
-                            color: Color::GOLD,
+                            color: Color::WHITE,
                         },
                     },
                 ],
@@ -59,7 +71,7 @@ fn update_fps(diagnostics: Res<Diagnostics>, mut query: Query<&mut Text, With<Fp
         if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(average) = fps.average() {
                 text.sections[1].value = format!("{:.2}", average);
-                text.sections[1].style.color = if average < 30.0 {
+                text.sections[1].style.color = if average < 29.0 {
                     Color::RED
                 } else if average < 59.0 {
                     Color::GOLD
